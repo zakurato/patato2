@@ -1,0 +1,60 @@
+.dashboard-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 2rem;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.stat-box label {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.stat-box input {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  background: #fff;
+  width: 220px;
+}
+
+.tipo-pago-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  max-width: 700px;
+}
+
+.tipo-pago-button {
+  display: block;
+  text-align: center;
+  padding: 1.25rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.tipo-pago-button:hover {
+  background: #1d4ed8;
+}
+
+.fecha-info {
+  margin-top: 2.5rem;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  color: #6b7280;
+  font-size: 0.9rem;
+}

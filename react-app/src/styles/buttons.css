@@ -1,0 +1,45 @@
+.btn {
+  display: inline-block;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-abonar {
+  background: #7c3aed;
+}
+
+.btn-azul {
+  background: #2563eb;
+}
+
+.btn-rojo {
+  background: #dc2626;
+}
+
+.btn-verde {
+  background: #16a34a;
+}
+
+.btn-naranja {
+  background: #ea580c;
+}
+
+.btn-gris {
+  background: #4b5563;
+}
