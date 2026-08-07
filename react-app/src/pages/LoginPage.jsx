@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import './LoginPage.css'
 
 export default function LoginPage() {
-  const { user, authReady, hasUsers, login, register } = useAuth()
+  const { user, authReady, hasUsers, statusError, login, register } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +14,14 @@ export default function LoginPage() {
 
   if (user) {
     return <Navigate to="/panel" replace />
+  }
+
+  if (statusError) {
+    return (
+      <div className="login-screen">
+        <p style={{ color: '#fff' }}>No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.</p>
+      </div>
+    )
   }
 
   if (!authReady || hasUsers === null) {

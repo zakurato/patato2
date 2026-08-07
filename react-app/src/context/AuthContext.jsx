@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [hasUsers, setHasUsers] = useState(null)
+  const [statusError, setStatusError] = useState(false)
 
   useEffect(() => {
     onUnauthorized(() => {
@@ -21,7 +22,7 @@ export function AuthProvider({ children }) {
       const status = await api.get('/auth/status')
       setHasUsers(status.hasUsers)
     } catch {
-      setHasUsers(null)
+      setStatusError(true)
     }
 
     const token = getToken()
@@ -70,7 +71,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, authReady, hasUsers, login, register, logout }}>
+    <AuthContext.Provider value={{ user, authReady, hasUsers, statusError, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )
