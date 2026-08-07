@@ -1,4 +1,3 @@
-const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const pool = require('./db')
 
@@ -42,10 +41,9 @@ function registerAuthRoutes(app) {
       return res.status(403).json({ message: 'El registro ya no está disponible' })
     }
 
-    const passwordHash = await bcrypt.hash(password, 10)
     const result = await pool.query(
       'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-      [email.toLowerCase().trim(), passwordHash],
+      [email.toLowerCase().trim(), password],
     )
     const user = result.rows[0]
 
@@ -64,7 +62,7 @@ function registerAuthRoutes(app) {
       return res.status(401).json({ message: 'Correo o contraseña incorrecto' })
     }
 
-    const valido = await bcrypt.compare(password || '', user.password_hash)
+    const valido = (password || '') === user.password_hash
     if (!valido) {
       return res.status(401).json({ message: 'Correo o contraseña incorrecto' })
     }
