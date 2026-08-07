@@ -9,6 +9,7 @@ import ClientesTablaPage from './pages/ClientesTablaPage'
 import ClienteFormPage from './pages/ClienteFormPage'
 import ClienteEditarPage from './pages/ClienteEditarPage'
 import AbonoPage from './pages/AbonoPage'
+import CambiarContrasenaPage from './pages/CambiarContrasenaPage'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
                 <Route path="/clientes/editar/:id" element={<ClienteEditarPage />} />
                 <Route path="/clientes/abono/:id" element={<AbonoPage />} />
                 <Route path="/clientes/:tipo" element={<ClientesTablaPage />} />
+                <Route path="/cuenta/contrasena" element={<CambiarContrasenaPage />} />
               </Route>
             </Route>
           </Routes>

@@ -17,6 +17,7 @@ export default function MainLayout() {
         <ul>
           <li><Link to="/panel">Inicio</Link></li>
           <li><Link to="/clientes/nuevo">Registrar usuario</Link></li>
+          <li><Link to="/cuenta/contrasena">Cambiar contraseña</Link></li>
           <li className="main-nav__spacer" />
           <li>
             <button type="button" className="link-button" onClick={handleLogout}>

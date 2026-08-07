@@ -1,0 +1,56 @@
+.password-form {
+  display: flex;
+  flex-direction: column;
+  max-width: 420px;
+  background: #fff;
+  padding: 1.5rem 1.75rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.password-form label {
+  font-size: 0.85rem;
+  color: #374151;
+  margin-bottom: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.password-form input {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.password-form button {
+  margin-top: 1.25rem;
+  padding: 0.65rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.password-form button:hover {
+  background: #1d4ed8;
+}
+
+.password-form-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.password-form-mensaje {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}

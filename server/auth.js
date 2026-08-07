@@ -73,6 +73,25 @@ function registerAuthRoutes(app) {
   app.get('/api/auth/me', requireAuth, (req, res) => {
     res.json({ id: req.user.sub, email: req.user.email })
   })
+
+  app.put('/api/auth/password', requireAuth, async (req, res) => {
+    const { currentPassword, newPassword } = req.body
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Contraseña actual y nueva son requeridas' })
+    }
+
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.sub])
+    const user = result.rows[0]
+
+    if (!user || currentPassword !== user.password_hash) {
+      return res.status(401).json({ message: 'La contraseña actual es incorrecta' })
+    }
+
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newPassword, user.id])
+
+    res.json({ ok: true })
+  })
 }
 
 module.exports = { registerAuthRoutes, requireAuth }

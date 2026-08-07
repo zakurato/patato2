@@ -70,8 +70,19 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  async function changePassword(currentPassword, newPassword) {
+    try {
+      await api.put('/auth/password', { currentPassword, newPassword })
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, message: err.message }
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, authReady, hasUsers, statusError, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, authReady, hasUsers, statusError, login, register, logout, changePassword }}
+    >
       {children}
     </AuthContext.Provider>
   )
