@@ -42,16 +42,16 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel, s
       {error && <p className="cliente-form-error">{error}</p>}
 
       <label htmlFor="cedula">Cédula</label>
-      <input id="cedula" name="cedula" value={form.cedula} onChange={handleChange} required />
+      <input id="cedula" name="cedula" value={form.cedula} onChange={handleChange} />
 
       <label htmlFor="nombre">Nombre</label>
-      <input id="nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
+      <input id="nombre" name="nombre" value={form.nombre} onChange={handleChange} />
 
       <label htmlFor="telefono">Teléfono</label>
-      <input id="telefono" name="telefono" value={form.telefono} onChange={handleChange} required />
+      <input id="telefono" name="telefono" value={form.telefono} onChange={handleChange} />
 
       <label htmlFor="direccion">Dirección</label>
-      <input id="direccion" name="direccion" value={form.direccion} onChange={handleChange} required />
+      <input id="direccion" name="direccion" value={form.direccion} onChange={handleChange} />
 
       <label htmlFor="prestamo">Préstamo (₡)</label>
       <input
@@ -61,7 +61,6 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel, s
         inputMode="decimal"
         value={form.prestamo}
         onChange={handleChange}
-        required
       />
 
       <label htmlFor="interes">Interés (₡)</label>
@@ -72,7 +71,6 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel, s
         inputMode="decimal"
         value={form.interes}
         onChange={handleChange}
-        required
       />
 
       <label htmlFor="metodoPago">Método de pago</label>
