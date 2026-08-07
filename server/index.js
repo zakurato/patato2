@@ -223,15 +223,20 @@ app.get('/api/cron/actualizar-estados', async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => {
-  console.log(`API escuchando en http://localhost:${PORT}`)
 
-  // Mientras el servidor corra como proceso persistente (local, VPS, Railway, etc.)
-  // esto mantiene los estados al día aunque nadie abra la app. En Vercel (serverless)
-  // este proceso no persiste entre invocaciones: ahí la actualización periódica la
-  // dispara Vercel Cron llamando a /api/cron/actualizar-estados (ver vercel.json).
-  actualizarEstados(pool).catch((err) => console.error('Error actualizando estados:', err.message))
-  setInterval(() => {
+// En Vercel (serverless) este archivo se importa como función, sin escuchar un
+// puerto propio: ahí la actualización periódica la dispara Vercel Cron llamando a
+// /api/cron/actualizar-estados (ver vercel.json). Local/VPS/Railway sí lo ejecutan
+// directamente, por eso el listen + setInterval solo corren en ese caso.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`API escuchando en http://localhost:${PORT}`)
+
     actualizarEstados(pool).catch((err) => console.error('Error actualizando estados:', err.message))
-  }, 15 * 60 * 1000)
-})
+    setInterval(() => {
+      actualizarEstados(pool).catch((err) => console.error('Error actualizando estados:', err.message))
+    }, 15 * 60 * 1000)
+  })
+}
+
+module.exports = app
