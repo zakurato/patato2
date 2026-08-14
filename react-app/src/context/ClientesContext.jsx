@@ -1,16 +1,23 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
+import { useAuth } from './AuthContext'
 
 const ClientesContext = createContext(null)
 
 export function ClientesProvider({ children }) {
+  const { user } = useAuth()
   const [usuarios, setUsuarios] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorCarga, setErrorCarga] = useState('')
 
   useEffect(() => {
-    cargarUsuarios()
-  }, [])
+    if (user) {
+      cargarUsuarios()
+    } else {
+      setUsuarios([])
+      setLoading(false)
+    }
+  }, [user])
 
   async function cargarUsuarios() {
     setLoading(true)
