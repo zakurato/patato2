@@ -13,14 +13,13 @@ const CAMPOS_VACIOS = {
   metodoPago: 'Diario',
 }
 
-export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel, saldoActual }) {
+export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel }) {
   const [form, setForm] = useState({ ...CAMPOS_VACIOS, ...valoresIniciales })
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   const prestamo = Number(form.prestamo) || 0
-  const interesesCalculados = Number(form.interes) || 0
-  const saldoCalculado = prestamo + interesesCalculados
+  const deudaTotal = Number(form.interes) || 0
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -83,12 +82,8 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel, s
       </select>
 
       <div className="cliente-form-resumen">
-        <p>Intereses ganados: ₡{interesesCalculados.toLocaleString('es-CR')}</p>
-        {saldoActual === undefined ? (
-          <p>Saldo total a cobrar: ₡{saldoCalculado.toLocaleString('es-CR')}</p>
-        ) : (
-          <p>Saldo actual (no cambia al editar): ₡{Number(saldoActual).toLocaleString('es-CR')}</p>
-        )}
+        <p>Préstamo entregado: ₡{prestamo.toLocaleString('es-CR')}</p>
+        <p>Deuda / saldo a cobrar: ₡{deudaTotal.toLocaleString('es-CR')}</p>
       </div>
 
       <button type="submit" disabled={enviando}>{enviando ? 'Guardando...' : submitLabel}</button>

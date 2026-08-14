@@ -64,7 +64,7 @@ app.post('/api/usuarios', async (req, res) => {
 
   const prestamoNum = Number(prestamo)
   const interesNum = Number(interes)
-  const saldo = prestamoNum + interesNum
+  const saldo = interesNum
 
   const client = await pool.connect()
   try {
@@ -102,7 +102,8 @@ app.put('/api/usuarios/:id', async (req, res) => {
     const result = await pool.query(
       `UPDATE usuarios
        SET cedula = $1, nombre = $2, telefono = $3, direccion = $4,
-           prestamo = $5, interes = $6, metodo_pago = $7, intereses_ganados = $6
+           prestamo = $5, interes = $6, metodo_pago = $7,
+           saldo = $6, saldo_rebajado = $6, intereses_ganados = $6
        WHERE id = $8
        RETURNING *`,
       [cedula, nombre, telefono, direccion, prestamoNum, interesNum, metodoPago, req.params.id],

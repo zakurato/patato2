@@ -35,7 +35,6 @@ export default function ClienteEditarPage() {
         valoresIniciales={usuario}
         onSubmit={handleSubmit}
         submitLabel="Guardar cambios"
-        saldoActual={usuario.saldoRebajado}
       />
     </div>
   )
