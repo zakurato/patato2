@@ -26,6 +26,13 @@
   margin-bottom: 1.5rem;
 }
 
+.tabla-header-titulo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .tabla-acciones-header {
   display: flex;
   align-items: center;

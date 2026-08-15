@@ -39,11 +39,13 @@ export default function ClientesTablaPage() {
   return (
     <div>
       <div className="tabla-header">
-        <h1>Tabla Clientes {tipo}</h1>
-        <div className="tabla-acciones-header">
+        <div className="tabla-header-titulo">
+          <h1>Tabla Clientes {tipo}</h1>
           <Link to="/panel" className="btn btn-gris">
             Volver al inicio
           </Link>
+        </div>
+        <div className="tabla-acciones-header">
           <Link to="/clientes/nuevo" className="btn btn-azul">
             Registrar usuario
           </Link>
