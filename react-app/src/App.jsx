@@ -23,6 +23,7 @@ export default function App() {
               <Route element={<MainLayout />}>
                 <Route path="/panel" element={<DashboardPage />} />
                 <Route path="/clientes/nuevo" element={<ClienteFormPage />} />
+                <Route path="/clientes/nuevo/:tipo" element={<ClienteFormPage />} />
                 <Route path="/clientes/editar/:id" element={<ClienteEditarPage />} />
                 <Route path="/clientes/abono/:id" element={<AbonoPage />} />
                 <Route path="/clientes/:tipo" element={<ClientesTablaPage />} />
