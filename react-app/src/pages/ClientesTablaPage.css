@@ -125,3 +125,18 @@
   gap: 0.5rem;
   margin-top: 1rem;
 }
+
+.tabla-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.tabla-paginacion button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

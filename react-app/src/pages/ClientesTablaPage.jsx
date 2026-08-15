@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
 import { useClientes } from '../context/ClientesContext'
 import { formatColones } from '../utils/format'
@@ -11,6 +11,8 @@ const ESTADO_CLASS = {
   '-1': 'estado-rojo',
 }
 
+const CLIENTES_POR_PAGINA = 30
+
 export default function ClientesTablaPage() {
   const { tipo } = useParams()
   const location = useLocation()
@@ -18,12 +20,27 @@ export default function ClientesTablaPage() {
   const [txtBuscar, setTxtBuscar] = useState('')
   const [mensaje, setMensaje] = useState(location.state?.mensaje ?? '')
   const [clienteAbierto, setClienteAbierto] = useState(null)
+  const [pagina, setPagina] = useState(1)
 
   const clientesFiltrados = usuarios.filter(
     (u) =>
       u.metodoPago === tipo &&
       u.nombre.toLowerCase().includes(txtBuscar.toLowerCase()),
   )
+
+  const totalPaginas = Math.max(1, Math.ceil(clientesFiltrados.length / CLIENTES_POR_PAGINA))
+  const mostrarPaginacion = clientesFiltrados.length > CLIENTES_POR_PAGINA
+  const paginaActual = Math.min(pagina, totalPaginas)
+  const clientesPagina = mostrarPaginacion
+    ? clientesFiltrados.slice(
+        (paginaActual - 1) * CLIENTES_POR_PAGINA,
+        paginaActual * CLIENTES_POR_PAGINA,
+      )
+    : clientesFiltrados
+
+  useEffect(() => {
+    setPagina(1)
+  }, [tipo, txtBuscar])
 
   function toggleCliente(id) {
     setClienteAbierto((actual) => (actual === id ? null : id))
@@ -70,7 +87,7 @@ export default function ClientesTablaPage() {
       {!loading && clientesFiltrados.length === 0 && <p>No hay clientes de pago {tipo}.</p>}
 
       <div className="clientes-lista">
-        {clientesFiltrados.map((usuario) => {
+        {clientesPagina.map((usuario) => {
           const estado = estadoDeUsuario(usuario.id)
           const abierto = clienteAbierto === usuario.id
 
@@ -131,6 +148,28 @@ export default function ClientesTablaPage() {
           )
         })}
       </div>
+
+      {mostrarPaginacion && (
+        <div className="tabla-paginacion">
+          <button
+            type="button"
+            className="btn btn-gris"
+            disabled={paginaActual === 1}
+            onClick={() => setPagina((p) => Math.max(1, p - 1))}
+          >
+            Anterior
+          </button>
+          <span>Página {paginaActual} de {totalPaginas}</span>
+          <button
+            type="button"
+            className="btn btn-gris"
+            disabled={paginaActual === totalPaginas}
+            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
 
       <p><Link to="/panel" className="btn btn-gris">Volver al inicio</Link></p>
     </div>
