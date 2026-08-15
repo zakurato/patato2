@@ -62,7 +62,7 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel })
         onChange={handleChange}
       />
 
-      <label htmlFor="interes">Interés (₡)</label>
+      <label htmlFor="interes">Deuda Total (₡)</label>
       <input
         id="interes"
         name="interes"
