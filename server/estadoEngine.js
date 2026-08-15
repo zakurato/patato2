@@ -14,6 +14,7 @@ const HORA = 60 * 60 * 1000
 // checkpoint en UTC sumando el offset en vez de usar la hora local del proceso.
 const CR_OFFSET_HORAS = 6
 const HORA_CORTE_QUINCENAL_CR = 4
+const HORA_CORTE_SEMANAL_CR = 20
 
 function fechaCR(anio, mesIndex0, dia, horaCR) {
   return new Date(Date.UTC(anio, mesIndex0, dia, horaCR + CR_OFFSET_HORAS, 0, 0))
@@ -74,19 +75,17 @@ function proximoCheckpointMensual(desde, tipo, fechasLimiteFn) {
   return validos[0]?.fecha ?? null
 }
 
-function proximoCheckpointSemanal(desde, tipo) {
-  const hora = tipo === 'A' ? 23 : 11 // A: domingo 11pm (verde->negro) | B: domingo 11am (negro->rojo)
-  const diasHastaDomingo = (7 - desde.getDay()) % 7
-  let candidato = new Date(
-    desde.getFullYear(),
-    desde.getMonth(),
-    desde.getDate() + diasHastaDomingo,
-    hora,
-    0,
-    0,
-    0,
-  )
-  if (candidato < desde) {
+// Semanal usa la misma lógica que Quincenal: un único corte que se repite (todos los
+// lunes a las 8pm hora Costa Rica) y que baja un nivel de color cada vez que se cruza.
+function proximoLunesCR(desde) {
+  // "Reloj de pared" en CR: se resta el offset para leer año/mes/día/día-de-semana
+  // como los vería alguien en Costa Rica, aunque el timestamp esté en UTC.
+  const wall = new Date(desde.getTime() - CR_OFFSET_HORAS * HORA)
+  const diaSemana = wall.getUTCDay() // 0 = domingo, 1 = lunes, ...
+  const diasHastaLunes = (8 - diaSemana) % 7
+
+  let candidato = fechaCR(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate() + diasHastaLunes, HORA_CORTE_SEMANAL_CR)
+  if (candidato <= desde) {
     candidato = new Date(candidato.getTime() + 7 * 24 * HORA)
   }
   return candidato
@@ -116,12 +115,18 @@ function calcularEstadoCalendario(metodoPago, estadoActual, updatedAt, ahora) {
     return Number(estadoActual)
   }
 
+  if (metodoPago === 'Semanal') {
+    const corte = proximoLunesCR(updatedAt)
+    if (corte && ahora >= corte) {
+      return Number(estadoActual) === 1 ? 0 : -1
+    }
+    return Number(estadoActual)
+  }
+
   const tipo = Number(estadoActual) === 1 ? 'A' : 'B'
   let proximo
 
-  if (metodoPago === 'Semanal') {
-    proximo = proximoCheckpointSemanal(updatedAt, tipo)
-  } else if (metodoPago === 'Mensual') {
+  if (metodoPago === 'Mensual') {
     proximo = proximoCheckpointMensual(updatedAt, tipo, fechasLimiteMensual)
   } else {
     return Number(estadoActual)
@@ -180,7 +185,7 @@ module.exports = {
   actualizarEstados,
   calcularEstadoDiario,
   calcularEstadoCalendario,
-  proximoCheckpointSemanal,
+  proximoLunesCR,
   proximoCorteQuincenal,
   proximoCheckpointMensual,
   fechasLimiteMensual,
