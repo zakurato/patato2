@@ -14,7 +14,7 @@ const HORA = 60 * 60 * 1000
 // checkpoint en UTC sumando el offset en vez de usar la hora local del proceso.
 const CR_OFFSET_HORAS = 6
 const HORA_CORTE_QUINCENAL_CR = 4
-const HORA_CORTE_SEMANAL_CR = 20
+const HORA_CORTE_SEMANAL_CR = 4
 
 function fechaCR(anio, mesIndex0, dia, horaCR) {
   return new Date(Date.UTC(anio, mesIndex0, dia, horaCR + CR_OFFSET_HORAS, 0, 0))
