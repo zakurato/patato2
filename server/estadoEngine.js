@@ -37,28 +37,29 @@ function checkpointsDelMes(anio, mesIndex0, fechasLimiteFn) {
   return puntos
 }
 
-// Quincenal usa días de calendario fijos (no dependen de la duración del mes):
-// día 15 y día 1 del mes siguiente (verde -> negro), día 17 y día 2 del mes siguiente
-// (negro -> rojo), todos a las 4am hora Costa Rica.
-function checkpointsQuincenal(anio, mesIndex0) {
+// Quincenal usa una sola secuencia de cortes fijos, repetida mes a mes: día 15 y día 1
+// del mes siguiente, a las 4am hora Costa Rica. No hay fechas separadas para "negro" y
+// "rojo": cada corte que un cliente cruza lo baja un nivel (verde -> negro, o
+// negro -> rojo si le tocó estar en negro en el corte anterior y no pagó mientras tanto).
+// Como los cortes están separados ~15 días entre sí, un cliente que acaba de pasar a
+// negro tiene ese margen completo para pagar antes de llegar a rojo.
+function fechasCorteQuincenal(anio, mesIndex0) {
   return [
-    { tipo: 'A', fecha: fechaCR(anio, mesIndex0, 15, HORA_CORTE_QUINCENAL_CR) },
-    { tipo: 'B', fecha: fechaCR(anio, mesIndex0, 17, HORA_CORTE_QUINCENAL_CR) },
-    { tipo: 'A', fecha: fechaCR(anio, mesIndex0 + 1, 1, HORA_CORTE_QUINCENAL_CR) },
-    { tipo: 'B', fecha: fechaCR(anio, mesIndex0 + 1, 2, HORA_CORTE_QUINCENAL_CR) },
+    fechaCR(anio, mesIndex0, 15, HORA_CORTE_QUINCENAL_CR),
+    fechaCR(anio, mesIndex0 + 1, 1, HORA_CORTE_QUINCENAL_CR),
   ]
 }
 
-function proximoCheckpointQuincenal(desde, tipo) {
+function proximoCorteQuincenal(desde) {
   const candidatos = []
   for (let offset = -1; offset <= 2; offset++) {
     const base = new Date(desde.getFullYear(), desde.getMonth() + offset, 1)
-    candidatos.push(...checkpointsQuincenal(base.getFullYear(), base.getMonth()))
+    candidatos.push(...fechasCorteQuincenal(base.getFullYear(), base.getMonth()))
   }
-  const validos = candidatos
-    .filter((c) => c.tipo === tipo && c.fecha >= desde)
-    .sort((a, b) => a.fecha - b.fecha)
-  return validos[0]?.fecha ?? null
+  // Estrictamente después de "desde": si updated_at cayera justo en un corte, no debe
+  // volver a encontrar ese mismo corte y disparar otro cambio de inmediato.
+  const validos = candidatos.filter((f) => f > desde).sort((a, b) => a - b)
+  return validos[0] ?? null
 }
 
 function proximoCheckpointMensual(desde, tipo, fechasLimiteFn) {
@@ -107,13 +108,19 @@ function calcularEstadoDiario(ultimoAbonoFecha, creadoEn, ahora) {
 function calcularEstadoCalendario(metodoPago, estadoActual, updatedAt, ahora) {
   if (Number(estadoActual) === -1) return Number(estadoActual) // rojo es terminal hasta que se abone
 
+  if (metodoPago === 'Quincenal') {
+    const corte = proximoCorteQuincenal(updatedAt)
+    if (corte && ahora >= corte) {
+      return Number(estadoActual) === 1 ? 0 : -1
+    }
+    return Number(estadoActual)
+  }
+
   const tipo = Number(estadoActual) === 1 ? 'A' : 'B'
   let proximo
 
   if (metodoPago === 'Semanal') {
     proximo = proximoCheckpointSemanal(updatedAt, tipo)
-  } else if (metodoPago === 'Quincenal') {
-    proximo = proximoCheckpointQuincenal(updatedAt, tipo)
   } else if (metodoPago === 'Mensual') {
     proximo = proximoCheckpointMensual(updatedAt, tipo, fechasLimiteMensual)
   } else {
@@ -174,7 +181,7 @@ module.exports = {
   calcularEstadoDiario,
   calcularEstadoCalendario,
   proximoCheckpointSemanal,
-  proximoCheckpointQuincenal,
+  proximoCorteQuincenal,
   proximoCheckpointMensual,
   fechasLimiteMensual,
 }
