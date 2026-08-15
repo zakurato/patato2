@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './ClienteForm.css'
 
 const METODOS_PAGO = ['Diario', 'Semanal', 'Quincenal', 'Mensual']
@@ -17,6 +18,7 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel })
   const [form, setForm] = useState({ ...CAMPOS_VACIOS, ...valoresIniciales })
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const navigate = useNavigate()
 
   const prestamo = Number(form.prestamo) || 0
   const deudaTotal = Number(form.interes) || 0
@@ -86,7 +88,12 @@ export default function ClienteForm({ valoresIniciales, onSubmit, submitLabel })
         <p>Deuda / saldo a cobrar: ₡{deudaTotal.toLocaleString('es-CR')}</p>
       </div>
 
-      <button type="submit" disabled={enviando}>{enviando ? 'Guardando...' : submitLabel}</button>
+      <div className="cliente-form-acciones">
+        <button type="submit" disabled={enviando}>{enviando ? 'Guardando...' : submitLabel}</button>
+        <button type="button" className="btn btn-gris" onClick={() => navigate(-1)}>
+          Volver
+        </button>
+      </div>
     </form>
   )
 }
