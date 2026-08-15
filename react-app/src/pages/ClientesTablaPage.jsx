@@ -41,6 +41,9 @@ export default function ClientesTablaPage() {
       <div className="tabla-header">
         <h1>Tabla Clientes {tipo}</h1>
         <div className="tabla-acciones-header">
+          <Link to="/panel" className="btn btn-gris">
+            Volver al inicio
+          </Link>
           <Link to="/clientes/nuevo" className="btn btn-azul">
             Registrar usuario
           </Link>
