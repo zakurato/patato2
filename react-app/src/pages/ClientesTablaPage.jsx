@@ -41,9 +41,6 @@ export default function ClientesTablaPage() {
       <div className="tabla-header">
         <div className="tabla-header-titulo">
           <h1>Tabla Clientes {tipo}</h1>
-          <Link to="/panel" className="btn btn-gris">
-            Volver al inicio
-          </Link>
         </div>
         <div className="tabla-acciones-header">
           <Link to="/clientes/nuevo" className="btn btn-azul">
@@ -55,6 +52,11 @@ export default function ClientesTablaPage() {
             value={txtBuscar}
             onChange={(e) => setTxtBuscar(e.target.value)}
           />
+        </div>
+        <div className="tabla-acciones-header">
+          <Link to="/panel" className="btn btn-gris">
+            Volver al inicio
+          </Link>
         </div>
       </div>
 
