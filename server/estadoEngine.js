@@ -9,12 +9,18 @@
 
 const HORA = 60 * 60 * 1000
 
-function ultimoDiaMes(anio, mesIndex0) {
-  return new Date(anio, mesIndex0 + 1, 0).getDate()
+// Costa Rica es UTC-6 todo el año (sin horario de verano). El servidor corre en UTC
+// (Vercel), así que para que "las 4am" sean 4am reales en Costa Rica, se construye el
+// checkpoint en UTC sumando el offset en vez de usar la hora local del proceso.
+const CR_OFFSET_HORAS = 6
+const HORA_CORTE_QUINCENAL_CR = 4
+
+function fechaCR(anio, mesIndex0, dia, horaCR) {
+  return new Date(Date.UTC(anio, mesIndex0, dia, horaCR + CR_OFFSET_HORAS, 0, 0))
 }
 
-function fechasLimiteQuincenal(anio, mesIndex0) {
-  return [15, Math.min(30, ultimoDiaMes(anio, mesIndex0))]
+function ultimoDiaMes(anio, mesIndex0) {
+  return new Date(anio, mesIndex0 + 1, 0).getDate()
 }
 
 function fechasLimiteMensual(anio, mesIndex0) {
@@ -29,6 +35,30 @@ function checkpointsDelMes(anio, mesIndex0, fechasLimiteFn) {
     puntos.push({ tipo: 'B', fecha: new Date(anio, mesIndex0, dia) }) // negro -> rojo
   }
   return puntos
+}
+
+// Quincenal usa días de calendario fijos (no dependen de la duración del mes):
+// día 15 y día 1 del mes siguiente (verde -> negro), día 17 y día 2 del mes siguiente
+// (negro -> rojo), todos a las 4am hora Costa Rica.
+function checkpointsQuincenal(anio, mesIndex0) {
+  return [
+    { tipo: 'A', fecha: fechaCR(anio, mesIndex0, 15, HORA_CORTE_QUINCENAL_CR) },
+    { tipo: 'B', fecha: fechaCR(anio, mesIndex0, 17, HORA_CORTE_QUINCENAL_CR) },
+    { tipo: 'A', fecha: fechaCR(anio, mesIndex0 + 1, 1, HORA_CORTE_QUINCENAL_CR) },
+    { tipo: 'B', fecha: fechaCR(anio, mesIndex0 + 1, 2, HORA_CORTE_QUINCENAL_CR) },
+  ]
+}
+
+function proximoCheckpointQuincenal(desde, tipo) {
+  const candidatos = []
+  for (let offset = -1; offset <= 2; offset++) {
+    const base = new Date(desde.getFullYear(), desde.getMonth() + offset, 1)
+    candidatos.push(...checkpointsQuincenal(base.getFullYear(), base.getMonth()))
+  }
+  const validos = candidatos
+    .filter((c) => c.tipo === tipo && c.fecha >= desde)
+    .sort((a, b) => a.fecha - b.fecha)
+  return validos[0]?.fecha ?? null
 }
 
 function proximoCheckpointMensual(desde, tipo, fechasLimiteFn) {
@@ -83,7 +113,7 @@ function calcularEstadoCalendario(metodoPago, estadoActual, updatedAt, ahora) {
   if (metodoPago === 'Semanal') {
     proximo = proximoCheckpointSemanal(updatedAt, tipo)
   } else if (metodoPago === 'Quincenal') {
-    proximo = proximoCheckpointMensual(updatedAt, tipo, fechasLimiteQuincenal)
+    proximo = proximoCheckpointQuincenal(updatedAt, tipo)
   } else if (metodoPago === 'Mensual') {
     proximo = proximoCheckpointMensual(updatedAt, tipo, fechasLimiteMensual)
   } else {
@@ -144,7 +174,7 @@ module.exports = {
   calcularEstadoDiario,
   calcularEstadoCalendario,
   proximoCheckpointSemanal,
+  proximoCheckpointQuincenal,
   proximoCheckpointMensual,
-  fechasLimiteQuincenal,
   fechasLimiteMensual,
 }
