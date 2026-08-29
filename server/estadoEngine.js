@@ -1,11 +1,14 @@
 // Motor de cálculo automático de estados (0 = neutro/negro, 1 = al día/verde, -1 = atrasado/rojo).
 //
-// Diario: ventana relativa al cliente (24h "al día" + 5h de gracia desde el último abono,
-// o desde el registro si nunca ha abonado).
+// Todos los métodos comparten la misma lógica de corte único: cada cliente guarda en
+// estados.updated_at el momento en que entró a su color actual, y desde ahí se busca el
+// próximo "corte" que le corresponda. Al cruzarlo, baja un nivel (verde -> negro, o
+// negro -> rojo); rojo es terminal hasta que abona (el abono resetea estado=1,
+// updated_at=NOW()). Lo único que cambia por método es cómo se calcula ese próximo corte:
 //
-// Semanal / Quincenal / Mensual: calendario compartido por todos los clientes de ese método.
-// Cada cliente guarda en estados.updated_at el momento en que entró a su color actual, y desde
-// ahí se busca el próximo "checkpoint" del calendario que le corresponda.
+// Diario: intervalo relativo fijo, 24h después de updated_at (sin anclar a reloj de pared).
+// Semanal / Quincenal / Mensual: calendario compartido por todos los clientes de ese método,
+// anclado a horas fijas de Costa Rica.
 
 const HORA = 60 * 60 * 1000
 
@@ -15,27 +18,16 @@ const HORA = 60 * 60 * 1000
 const CR_OFFSET_HORAS = 6
 const HORA_CORTE_QUINCENAL_CR = 4
 const HORA_CORTE_SEMANAL_CR = 4
+const HORA_CORTE_MENSUAL_CR = 4
 
 function fechaCR(anio, mesIndex0, dia, horaCR) {
   return new Date(Date.UTC(anio, mesIndex0, dia, horaCR + CR_OFFSET_HORAS, 0, 0))
 }
 
-function ultimoDiaMes(anio, mesIndex0) {
-  return new Date(anio, mesIndex0 + 1, 0).getDate()
-}
-
-function fechasLimiteMensual(anio, mesIndex0) {
-  return [1, Math.min(30, ultimoDiaMes(anio, mesIndex0))]
-}
-
-function checkpointsDelMes(anio, mesIndex0, fechasLimiteFn) {
-  const dias = fechasLimiteFn(anio, mesIndex0)
-  const puntos = []
-  for (const dia of dias) {
-    puntos.push({ tipo: 'A', fecha: new Date(anio, mesIndex0, dia - 1) }) // verde -> negro
-    puntos.push({ tipo: 'B', fecha: new Date(anio, mesIndex0, dia) }) // negro -> rojo
-  }
-  return puntos
+// Diario no usa calendario: el corte es simplemente 24h después de que el cliente
+// entró a su color actual (creación del cliente, o último abono, vía updated_at).
+function proximoCorteDiario(desde) {
+  return new Date(desde.getTime() + 24 * HORA)
 }
 
 // Quincenal usa una sola secuencia de cortes fijos, repetida mes a mes: día 15 y día 1
@@ -63,16 +55,20 @@ function proximoCorteQuincenal(desde) {
   return validos[0] ?? null
 }
 
-function proximoCheckpointMensual(desde, tipo, fechasLimiteFn) {
+// Mensual usa la misma lógica de corte único que Quincenal/Semanal: un solo corte
+// por mes, el día 1 a las 4am hora Costa Rica, que baja un nivel cada vez que se cruza.
+function fechasCorteMensual(anio, mesIndex0) {
+  return [fechaCR(anio, mesIndex0, 1, HORA_CORTE_MENSUAL_CR)]
+}
+
+function proximoCorteMensual(desde) {
   const candidatos = []
   for (let offset = -1; offset <= 2; offset++) {
     const base = new Date(desde.getFullYear(), desde.getMonth() + offset, 1)
-    candidatos.push(...checkpointsDelMes(base.getFullYear(), base.getMonth(), fechasLimiteFn))
+    candidatos.push(...fechasCorteMensual(base.getFullYear(), base.getMonth()))
   }
-  const validos = candidatos
-    .filter((c) => c.tipo === tipo && c.fecha >= desde)
-    .sort((a, b) => a.fecha - b.fecha)
-  return validos[0]?.fecha ?? null
+  const validos = candidatos.filter((f) => f > desde).sort((a, b) => a - b)
+  return validos[0] ?? null
 }
 
 // Semanal usa la misma lógica que Quincenal: un único corte que se repite (todos los
@@ -91,48 +87,21 @@ function proximoLunesCR(desde) {
   return candidato
 }
 
-function calcularEstadoDiario(ultimoAbonoFecha, creadoEn, ahora) {
-  const huboAbono = Boolean(ultimoAbonoFecha)
-  const referencia = huboAbono ? ultimoAbonoFecha : creadoEn
-  const horas = (ahora - referencia) / HORA
-
-  if (!huboAbono) {
-    return horas < 29 ? 0 : -1
-  }
-  if (horas < 24) return 1
-  if (horas < 29) return 0
-  return -1
+const PROXIMO_CORTE_POR_METODO = {
+  Diario: proximoCorteDiario,
+  Semanal: proximoLunesCR,
+  Quincenal: proximoCorteQuincenal,
+  Mensual: proximoCorteMensual,
 }
 
 function calcularEstadoCalendario(metodoPago, estadoActual, updatedAt, ahora) {
   if (Number(estadoActual) === -1) return Number(estadoActual) // rojo es terminal hasta que se abone
 
-  if (metodoPago === 'Quincenal') {
-    const corte = proximoCorteQuincenal(updatedAt)
-    if (corte && ahora >= corte) {
-      return Number(estadoActual) === 1 ? 0 : -1
-    }
-    return Number(estadoActual)
-  }
+  const proximoCorteFn = PROXIMO_CORTE_POR_METODO[metodoPago]
+  if (!proximoCorteFn) return Number(estadoActual)
 
-  if (metodoPago === 'Semanal') {
-    const corte = proximoLunesCR(updatedAt)
-    if (corte && ahora >= corte) {
-      return Number(estadoActual) === 1 ? 0 : -1
-    }
-    return Number(estadoActual)
-  }
-
-  const tipo = Number(estadoActual) === 1 ? 'A' : 'B'
-  let proximo
-
-  if (metodoPago === 'Mensual') {
-    proximo = proximoCheckpointMensual(updatedAt, tipo, fechasLimiteMensual)
-  } else {
-    return Number(estadoActual)
-  }
-
-  if (proximo && ahora >= proximo) {
+  const corte = proximoCorteFn(updatedAt)
+  if (corte && ahora >= corte) {
     return Number(estadoActual) === 1 ? 0 : -1
   }
   return Number(estadoActual)
@@ -145,11 +114,9 @@ async function actualizarEstados(pool) {
     SELECT
       u.id AS usuario_id,
       u.metodo_pago,
-      u.created_at,
       e.id AS estado_id,
       e.estado,
-      e.updated_at,
-      (SELECT fecha FROM abonos a WHERE a.usuario_id = u.id ORDER BY fecha DESC LIMIT 1) AS ultimo_abono
+      e.updated_at
     FROM usuarios u
     JOIN estados e ON e.usuario_id = u.id
   `)
@@ -157,17 +124,7 @@ async function actualizarEstados(pool) {
   let actualizados = 0
 
   for (const row of rows) {
-    let nuevoEstado
-
-    if (row.metodo_pago === 'Diario') {
-      nuevoEstado = calcularEstadoDiario(
-        row.ultimo_abono ? new Date(row.ultimo_abono) : null,
-        new Date(row.created_at),
-        ahora,
-      )
-    } else {
-      nuevoEstado = calcularEstadoCalendario(row.metodo_pago, row.estado, new Date(row.updated_at), ahora)
-    }
+    const nuevoEstado = calcularEstadoCalendario(row.metodo_pago, row.estado, new Date(row.updated_at), ahora)
 
     if (Number(nuevoEstado) !== Number(row.estado)) {
       await pool.query('UPDATE estados SET estado = $1, updated_at = NOW() WHERE id = $2', [
@@ -183,10 +140,9 @@ async function actualizarEstados(pool) {
 
 module.exports = {
   actualizarEstados,
-  calcularEstadoDiario,
   calcularEstadoCalendario,
+  proximoCorteDiario,
   proximoLunesCR,
   proximoCorteQuincenal,
-  proximoCheckpointMensual,
-  fechasLimiteMensual,
+  proximoCorteMensual,
 }
