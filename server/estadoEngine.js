@@ -55,7 +55,7 @@ function proximoCorteQuincenal(desde) {
   return validos[0] ?? null
 }
 
-// Mensual usa la misma lógica de corte único que Quincenal/Semanal: un solo corte
+// Mensual usa la misma lógica de corte único que Quincenal: un solo corte
 // por mes, el día 1 a las 4am hora Costa Rica, que baja un nivel cada vez que se cruza.
 function fechasCorteMensual(anio, mesIndex0) {
   return [fechaCR(anio, mesIndex0, 1, HORA_CORTE_MENSUAL_CR)]
@@ -71,25 +71,38 @@ function proximoCorteMensual(desde) {
   return validos[0] ?? null
 }
 
-// Semanal usa la misma lógica que Quincenal: un único corte que se repite (todos los
-// lunes a las 4am hora Costa Rica) y que baja un nivel de color cada vez que se cruza.
-function proximoLunesCR(desde) {
+// Semanal tiene dos cortes distintos por semana, ambos a las 4am hora Costa Rica:
+// - Viernes: verde -> negro.
+// - Martes: negro -> rojo, pero solo si el cliente ya llevaba en negro todo un martes
+//   anterior sin abonar. El primer martes después de quedar en negro no cuenta, así que
+//   quien pasa a negro un viernes llega a rojo el martes de la semana siguiente (11 días).
+const VIERNES = 5
+const MARTES = 2
+
+// Próximo día de la semana dado (0 = domingo ... 6 = sábado) a la hora de corte semanal,
+// estrictamente después de "desde".
+function proximoDiaSemanaCR(desde, diaObjetivo) {
   // "Reloj de pared" en CR: se resta el offset para leer año/mes/día/día-de-semana
   // como los vería alguien en Costa Rica, aunque el timestamp esté en UTC.
   const wall = new Date(desde.getTime() - CR_OFFSET_HORAS * HORA)
-  const diaSemana = wall.getUTCDay() // 0 = domingo, 1 = lunes, ...
-  const diasHastaLunes = (8 - diaSemana) % 7
+  const diasHasta = (diaObjetivo - wall.getUTCDay() + 7) % 7
 
-  let candidato = fechaCR(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate() + diasHastaLunes, HORA_CORTE_SEMANAL_CR)
+  let candidato = fechaCR(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate() + diasHasta, HORA_CORTE_SEMANAL_CR)
   if (candidato <= desde) {
     candidato = new Date(candidato.getTime() + 7 * 24 * HORA)
   }
   return candidato
 }
 
+function proximoCorteSemanal(desde, estadoActual) {
+  if (Number(estadoActual) === 1) return proximoDiaSemanaCR(desde, VIERNES)
+  // En negro: se salta el primer martes y el corte es el martes siguiente.
+  return new Date(proximoDiaSemanaCR(desde, MARTES).getTime() + 7 * 24 * HORA)
+}
+
 const PROXIMO_CORTE_POR_METODO = {
   Diario: proximoCorteDiario,
-  Semanal: proximoLunesCR,
+  Semanal: proximoCorteSemanal,
   Quincenal: proximoCorteQuincenal,
   Mensual: proximoCorteMensual,
 }
@@ -100,7 +113,7 @@ function calcularEstadoCalendario(metodoPago, estadoActual, updatedAt, ahora) {
   const proximoCorteFn = PROXIMO_CORTE_POR_METODO[metodoPago]
   if (!proximoCorteFn) return Number(estadoActual)
 
-  const corte = proximoCorteFn(updatedAt)
+  const corte = proximoCorteFn(updatedAt, estadoActual)
   if (corte && ahora >= corte) {
     return Number(estadoActual) === 1 ? 0 : -1
   }
@@ -142,7 +155,7 @@ module.exports = {
   actualizarEstados,
   calcularEstadoCalendario,
   proximoCorteDiario,
-  proximoLunesCR,
+  proximoCorteSemanal,
   proximoCorteQuincenal,
   proximoCorteMensual,
 }
