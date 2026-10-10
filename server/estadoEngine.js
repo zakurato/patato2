@@ -72,7 +72,7 @@ function proximoCorteMensual(desde) {
 }
 
 // Semanal usa la misma lógica que Quincenal: un único corte que se repite (todos los
-// lunes a las 8pm hora Costa Rica) y que baja un nivel de color cada vez que se cruza.
+// lunes a las 4am hora Costa Rica) y que baja un nivel de color cada vez que se cruza.
 function proximoLunesCR(desde) {
   // "Reloj de pared" en CR: se resta el offset para leer año/mes/día/día-de-semana
   // como los vería alguien en Costa Rica, aunque el timestamp esté en UTC.
